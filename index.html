@@ -3147,4 +3147,54 @@ window.VILLA_POZOS_SECCIONES_HISTORICAS_EXTRA_2024=[955,965];
  setTimeout(syncFromMain,0);
  window.syncMapLocalFilters=syncFromMain;
 })();
-</script>\n</body></html>
+</script>\n
+<script id="FIX_COLORES_RANK_MAP_FINAL_20260927">
+(function(){
+  function el(id){return document.getElementById(id)}
+  function rank(){var e=el('mapRankFilter'); return e?Math.max(1,Math.min(3,Number(e.value)||1)):1;}
+  function rowFor(sec){
+    var n=Number(sec), ev=el('election')?String(el('election').value||''):'';
+    try{
+      if(typeof current!=='undefined' && current && current.find){
+        var a=current.find(function(r){return Number(r.s)===n && (!ev || String(r.e)===ev)});
+        if(a)return a;
+      }
+      if(typeof DATA!=='undefined'){
+        return DATA.find(function(r){return Number(r.s)===n && (!ev || String(r.e)===ev)}) || DATA.find(function(r){return Number(r.s)===n});
+      }
+    }catch(_){ }
+    return null;
+  }
+  window.googleColorForSection=function(sec){
+    var r=rowFor(sec); if(!r)return '#9ca3af';
+    try{var pc=mapPartyRank(r,rank()); return pc&&pc[1]?pc[1]:'#9ca3af';}catch(_){return '#9ca3af';}
+  };
+  window.refreshGoogleSectionStyles=function(){
+    if(!window.googleMapInstance || !googleMapInstance.data)return;
+    googleMapInstance.data.setStyle(function(feature){
+      var sec=Number(feature.getProperty('SECCION'));
+      var r=rowFor(sec);
+      var selected=false; try{selected=Number(selectedSection)===sec}catch(_){ }
+      return {
+        fillColor:selected?'#ffea00':(r?window.googleColorForSection(sec):'#9ca3af'),
+        fillOpacity:selected?.78:(r?.46:.10),
+        strokeColor:selected?'#000000':'#202020', strokeOpacity:1,
+        strokeWeight:selected?6:1.5, zIndex:selected?999:10, clickable:true
+      };
+    });
+  };
+  function repaint(){
+    try{if(typeof renderMap==='function')renderMap()}catch(_){ }
+    try{window.refreshGoogleSectionStyles()}catch(_){ }
+    try{if(typeof window.applyMapRankV32==='function')window.applyMapRankV32()}catch(_){ }
+    try{if(typeof window.applyGoogleTerritoryV30==='function')window.applyGoogleTerritoryV30()}catch(_){ }
+    setTimeout(function(){try{window.refreshGoogleSectionStyles()}catch(_){ }},0);
+    setTimeout(function(){try{window.refreshGoogleSectionStyles()}catch(_){ }},120);
+  }
+  var rf=el('mapRankFilter');
+  if(rf)rf.addEventListener('change',repaint,false);
+  ['election','df','dl','mun','sec'].forEach(function(id){var e=el(id);if(e)e.addEventListener('change',function(){setTimeout(repaint,0)},false)});
+  window.__repaintRankColorsFinal=repaint;
+})();
+</script>
+</body></html>
